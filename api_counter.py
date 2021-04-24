@@ -48,13 +48,13 @@ class LimitCountPerTime:
     def checkAsyncCondition(self, now : datetime.datetime):
         self._api_request_time.append(now)
 
-        api_cnt = len(self._api_rquest_time)
-        if api_cnt < _count_value:
-            return False
+        api_cnt = len(self._api_request_time)
+        if api_cnt < self._count_value:
+            return True
 
-        span_time = (now - self._api_rquest_time[0])
+        span_time = (now - self._api_request_time[0])
         
-        if span_time.total_second() < per_time:
+        if span_time.total_seconds() < self._per_time:
             return False
         else:
             self._api_request_time.append(now)
@@ -100,7 +100,10 @@ class APIRequestCounter:
                 th.join()
         else:  # async request count is if it can request, return true
             for counter in self._count_limit:
-                is_valid &= concurrent.futures.ThreadPoolExecutor().submit(counter.checkAsyncCondition, args=(now, sync,))
+                is_valid &= counter.checkAsyncCondition(now)
+            #     thread_list.append(concurrent.futures.ThreadPoolExecutor().submit(counter.checkAsyncCondition, args=(now,)))
+            # for th in thread_list:
+            #     is_valid &= th.result()
         
         return is_valid
         
